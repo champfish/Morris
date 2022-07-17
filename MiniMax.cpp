@@ -1,3 +1,5 @@
+// Christian Duffee (cbd170000)
+// CS 6364.0U1
 // Please forgive code, I haven't coded in C++ since CS 2336
 
 #include <iostream>
@@ -7,7 +9,10 @@
 
 using namespace std;
 
+// max size of children to consider, a value of 18^2 was chosen
 static const int ARRAY_SIZE = 324;
+
+// an adjacency matrix representing whether a connection exists between any two positions
 const static bool adj[18][18] = {0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0};
 
 static const int EMPTY = 0;
@@ -17,6 +22,7 @@ static const int BLACK = 2;
 static int targetdepth = 0;
 static int positionsEvaluated = 0;
 
+// Node object 
 struct Node {
     int val;
     int pos;
@@ -24,7 +30,7 @@ struct Node {
     vector<Node *>children;
 };
   
- // Utility function to create a new tree node
+ // Node constructor
 Node *newNode(int pos, int depth) {
     Node *temp = new Node;
     temp->val = 0;
@@ -36,16 +42,19 @@ Node *newNode(int pos, int depth) {
 int stringtoint(string line);
 string inttostring(int input);
 int staticestimate(int pos);
-bool closeMill(int pos, int index);
+int staticestimate2(int pos);
+bool closeMill(int pos, int index, int c);
 int get(int pos, int index);
 int getPos(int pos, int index, int val);
-int getbestmove(Node * root, int alpha, int beta);
+int getbestmove(Node * root);
 array<int, ARRAY_SIZE> GenerateMovesOpening(int pos, int c);
 array<int, ARRAY_SIZE> GenerateMovesMidgameEndgame(int pos, int c);
 array<int, ARRAY_SIZE> GenerateAdd(int pos, int c);
 array<int, ARRAY_SIZE> GenerateRemove(int pos, int c);
 array<int, ARRAY_SIZE> GenerateHopping(int pos, int c);
 array<int, ARRAY_SIZE> GenerateMove(int pos, int c);
+
+// Main method which takes 3 arguments: string of input file name, string of output file name, depth to search
 int main(int argc, char** argv) {
     targetdepth = strtol(argv[3], NULL, 10);
 
@@ -56,7 +65,7 @@ int main(int argc, char** argv) {
 
     Node* root = newNode(startpos,0);
 
-    int rootVal = getbestmove(root, INT_MIN, INT_MAX);
+    int rootVal = getbestmove(root);
     int bestChildPos = 0;
     int bestChildVal = INT_MIN;
     for(unsigned long int i = 0; i < root->children.size(); i++){
@@ -75,52 +84,45 @@ int main(int argc, char** argv) {
     outfile.close();
 }
 
-int getbestmove(Node * root, int alpha, int beta) {
-    int localMin = INT_MAX;
-    int localMax = INT_MIN;
-    if(root->depth==targetdepth-1){
-        root->val = staticestimate(root->pos);
+// Performs the minimax search, setting the minimax value to root, and returning it
+int getbestmove(Node * root) {
+    int min = INT_MAX;
+    int max = INT_MIN;
+    if(root->depth==targetdepth){
+        root->val = staticestimate2(root->pos);
         return root -> val;
     }else{
-        array<int, ARRAY_SIZE> moves = GenerateMovesOpening(root->pos, root->depth%2+1); // WHITE for even, BLACK for odd
+        array<int, ARRAY_SIZE> moves = GenerateMovesMidgameEndgame(root->pos, root->depth%2+1); // WHITE for even, BLACK for odd
         int n = 0;
         int move = moves[n];
         while(move != 0){
             Node * child = newNode(move,root->depth+1);
             (root->children).push_back(child);
-            int childVal = getbestmove(child,alpha,beta);
-
-            localMax = max(localMax, childVal);
-            localMin = min(localMin, childVal);
-            
-            if(root->depth%2+1==WHITE){
-                alpha = max(alpha, localMax);
-                if(beta <= alpha){
-                    return INT_MAX;
-                }
-            }else{
-                beta = min(beta, localMin);
-                if(beta <= alpha){
-                    return INT_MIN;
-                }
+            int childVal = getbestmove(child);
+            if(childVal<min){
+                min = childVal;
             }
-
+            if(childVal>max){
+                max = childVal;
+            }
             move = moves[++n];         
         }
     }
     if(root->depth%2==0){
-        root->val = localMax;
-        return localMax;
+        root->val = max;
+        return max;
     }else{
-        root->val = localMin;
-        return localMin;
+        root->val = min;
+        return min;
     }
 }
 
+// return a list of all possible moves during the opening stage for color c from position pos
 array<int, ARRAY_SIZE> GenerateMovesOpening(int pos, int c){
     return GenerateAdd(pos, c);
 }
 
+// return a list of all possible moves during the midgame or endgame for color c from position pos
 array<int, ARRAY_SIZE> GenerateMovesMidgameEndgame(int pos, int c){
     int cCount = 0;
     for(int i =0; i<18; i++){
@@ -143,6 +145,7 @@ array<int, ARRAY_SIZE> GenerateMovesMidgameEndgame(int pos, int c){
     return GenerateAdd(pos, c);
 }
 
+// return a list of all possible moves during the endgame for color c from position pos
 array<int, ARRAY_SIZE> GenerateHopping(int pos, int c){
     array<int, ARRAY_SIZE> moves = {0};
     int n = 0;
@@ -152,7 +155,7 @@ array<int, ARRAY_SIZE> GenerateHopping(int pos, int c){
                 if(get(pos,k)==EMPTY){
                     int emptyPos = getPos(pos,i,EMPTY);
                     int newPos = getPos(emptyPos,k,c);
-                    if(closeMill(emptyPos,k)){
+                    if(closeMill(emptyPos,k,c)){
                         array<int, ARRAY_SIZE> reMoves = GenerateRemove(newPos,c);
                         for(int j = 0; j < ARRAY_SIZE; j ++ ){
                             if(reMoves[j]!=EMPTY){
@@ -169,12 +172,13 @@ array<int, ARRAY_SIZE> GenerateHopping(int pos, int c){
     return moves;
 }
 
+// return a list of all possible moves when adding a piece of color c from position pos
 array<int, ARRAY_SIZE> GenerateAdd(int pos, int c){
     array<int, ARRAY_SIZE> moves = {0};
     int n = 0;
     for(int i =0; i<18; i++){
         if(get(pos,i)==EMPTY){
-            if(closeMill(pos,i)){
+            if(closeMill(pos,i,c)){
                 array<int, ARRAY_SIZE> reMoves = GenerateRemove(getPos(pos,i,c),c);
                 for(int j = 0; j < ARRAY_SIZE; j ++ ){
                     if(reMoves[j]!=EMPTY){
@@ -189,6 +193,7 @@ array<int, ARRAY_SIZE> GenerateAdd(int pos, int c){
     return moves;
 }
 
+// return a list of all possible moves during the midgame for color c from position pos
 array<int, ARRAY_SIZE> GenerateMove(int pos, int c){
     array<int, ARRAY_SIZE> moves = {0};
     int n = 0;
@@ -198,7 +203,7 @@ array<int, ARRAY_SIZE> GenerateMove(int pos, int c){
                 if(adj[i][k] && get(pos,k)==EMPTY){
                     int emptyPos = getPos(pos,i,EMPTY);
                     int newPos = getPos(emptyPos,k,c);
-                    if(closeMill(emptyPos,k)){
+                    if(closeMill(emptyPos,k,c)){
                         array<int, ARRAY_SIZE> reMoves = GenerateRemove(newPos,c);
                         for(int j = 0; j < ARRAY_SIZE; j ++ ){
                             if(reMoves[j]!=EMPTY){
@@ -215,6 +220,7 @@ array<int, ARRAY_SIZE> GenerateMove(int pos, int c){
     return moves;
 }
 
+// return a list of all possible moves when removing a piece for color !c from position pos
 array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
     int d = WHITE;
     if(c==WHITE){
@@ -223,13 +229,14 @@ array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
     array<int, ARRAY_SIZE> moves = {0};
     int n = 0;
     for(int i =0; i<18; i++){
-        if(get(pos,i)==d){
+        if(get(pos,i)==d && !closeMill(pos,i,d)){
             moves[n++] = getPos(pos,i,EMPTY);
         }
     }
     return moves;
 }
 
+// returns the int representation of position line
 int stringtoint(string line){
     int sum = 0;
     int mult = 1;
@@ -246,6 +253,7 @@ int stringtoint(string line){
     return sum;
 }
 
+// returns the string representation of position input
 string inttostring(int input){
     string line(18,'x');
     for(int i =0; i<18; i++){
@@ -260,6 +268,7 @@ string inttostring(int input){
     return line;
 }
 
+// returns the static estimate of position pos
 int staticestimate(int pos){
     positionsEvaluated++;
     int estimate=0;
@@ -274,6 +283,26 @@ int staticestimate(int pos){
     return estimate;
 }
 
+// returns the static estimate of position pos
+int staticestimate2(int pos){
+    positionsEvaluated++;
+
+    array<int, ARRAY_SIZE> moves = GenerateMovesMidgameEndgame(pos, 2); // WHITE for even, BLACK for odd
+    int moveCount = 0;
+    while(moves[moveCount]!=0){moveCount++;}
+
+    int estimate=0;
+    for(int i =0; i<18; i++){
+        int val = get(pos,i);
+        if(val==WHITE){
+            estimate++;
+        }else if (val == BLACK){
+            estimate--;
+        }
+    }
+    return 1000*estimate-moveCount;
+}
+
 // returns the value of the piece at index, 0 null, 1 white, 2 black
 int get(int pos, int index){
     return pos / lround(pow(3,index)) % 3;
@@ -284,9 +313,8 @@ int getPos(int pos, int index, int val){
     return (pos / lround(pow(3,index+1)) * lround(pow(3,index+1))) + (val * pow(3,index)) + (pos % lround(pow(3,index)));
 }
 
-
-bool closeMill(int pos, int index){
-    int c = 1;
+// return if color c at index of position pos would, or does, complete a mill
+bool closeMill(int pos, int index, int c){
     switch(index){
         case 0:
             return get(pos,2)==c && get(pos,4)==c;

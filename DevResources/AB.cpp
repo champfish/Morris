@@ -39,7 +39,7 @@ int staticestimate(int pos);
 bool closeMill(int pos, int index);
 int get(int pos, int index);
 int getPos(int pos, int index, int val);
-int getbestmove(Node * root);
+int getbestmove(Node * root, int alpha, int beta);
 array<int, ARRAY_SIZE> GenerateMovesOpening(int pos, int c);
 array<int, ARRAY_SIZE> GenerateMovesMidgameEndgame(int pos, int c);
 array<int, ARRAY_SIZE> GenerateAdd(int pos, int c);
@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
     Node* root = newNode(startpos,0);
 
-    int rootVal = getbestmove(root);
+    int rootVal = getbestmove(root, INT_MIN, INT_MAX);
     int bestChildPos = 0;
     int bestChildVal = INT_MIN;
     for(unsigned long int i = 0; i < root->children.size(); i++){
@@ -75,10 +75,10 @@ int main(int argc, char** argv) {
     outfile.close();
 }
 
-int getbestmove(Node * root) {
-    int min = INT_MAX;
-    int max = INT_MIN;
-    if(root->depth==targetdepth-1){
+int getbestmove(Node * root, int alpha, int beta) {
+    int localMin = INT_MAX;
+    int localMax = INT_MIN;
+    if(root->depth==targetdepth){
         root->val = staticestimate(root->pos);
         return root -> val;
     }else{
@@ -88,22 +88,32 @@ int getbestmove(Node * root) {
         while(move != 0){
             Node * child = newNode(move,root->depth+1);
             (root->children).push_back(child);
-            int childVal = getbestmove(child);
-            if(childVal<min){
-                min = childVal;
+            int childVal = getbestmove(child,alpha,beta);
+
+            localMax = max(localMax, childVal);
+            localMin = min(localMin, childVal);
+            
+            if(root->depth%2+1==WHITE){
+                alpha = max(alpha, localMax);
+                if(beta <= alpha){
+                    return INT_MAX;
+                }
+            }else{
+                beta = min(beta, localMin);
+                if(beta <= alpha){
+                    return INT_MIN;
+                }
             }
-            if(childVal>max){
-                max = childVal;
-            }
+
             move = moves[++n];         
         }
     }
     if(root->depth%2==0){
-        root->val = max;
-        return max;
+        root->val = localMax;
+        return localMax;
     }else{
-        root->val = min;
-        return min;
+        root->val = localMin;
+        return localMin;
     }
 }
 
