@@ -44,7 +44,7 @@ MINIMAX estimate: 994
 ```
 
 ## ABOpening.cpp
-This program is the exact same as MiniMaxOpening.cpp, except that it uses alpha-beta pruning to reduce the number of nodes that need processing. This will not effect the results. This can be seen in the following example, which uses the same input as the example for MiniMaxOpening.cpp.
+This program is the exact same as MiniMaxOpening.cpp, except that it uses alpha-beta pruning to reduce the number of nodes that need processing. This will not effect the results, but will decrease the number of static estimations run. This can be seen in the following example, which uses the same input as the example for MiniMaxOpening.cpp.
 ### Example
 ``` 
 Input: xxxxxxxxxxxxxxxxxx
