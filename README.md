@@ -3,6 +3,8 @@
 ### Christian Duffee (cbd170000)
 ### Dr. Haim Schweitzer CS 6364.OU1 
 
+If you do not have a markdown reader, please view at https://github.com/champfish/Morris
+
 ![This is an image](labeledPoints.png)
 
 ## Run instructions
@@ -94,8 +96,8 @@ MINIMAX estimate: -11
 ## MiniMaxOpeningImproved.cpp
 This program is identical to MiniMaxOpening.cpp except for the fact the static estimate function has been changed. The new static estimate function is twice the difference between number of white and black pieces, plus the difference between the number of white and black incomplete mills (with 2/3 pieces placed). This is an improvement over the previous static estimate function because it allows the player to set up possible future mills without exploring additional depths. For instance, its very easy to estimate that having a 2/3 completed mill might result in an eventual future mill completing even if the probably completion of the mill is beyond the horizon, and thus not considered by the old algorithm. 
 
-As shown in the example below, this allows the white player to prioritize setting up a mill on space 1, 3, and 5 as opposed to just blindly placing a piece on spot 2. 
-### Example (MiniMaxOpening.cpp)
+As shown in example 1 below, this allows the white player to prioritize setting up a mill on space 1, 3, and 5 as opposed to just blindly placing a piece on spot 2. 
+### Example 1 (MiniMaxOpening.cpp)
 ``` 
 Input: WxxxxxxxxxxxxxxxxB
 Depth: 1
@@ -104,7 +106,7 @@ Board Position: WWxxxxxxxxxxxxxxxB
 Positions evaluated by static estimation: 16
 MINIMAX estimate: 1
 ```
-### Example (MiniMaxOpeningImproved.cpp)
+### Example 1 (MiniMaxOpeningImproved.cpp)
 ``` 
 Input: WxxxxxxxxxxxxxxxxB
 Depth: 1
@@ -113,12 +115,22 @@ Board Position: WxWxxxxxxxxxxxxxxB
 Positions evaluated by static estimation: 16
 MINIMAX estimate: 3
 ```
+### Example 2 (MiniMaxOpeningImproved.cpp)
+Note this produces a different move than the same input shown in the MiniMaxOpening.cpp section.
+``` 
+Input: xxxxxxxxxxxxxxxxxx
+Depth: 5
+==================================
+Board Position: xWxxxxxxxxxxxxxxxx
+Positions evaluated by static estimation: 1042860
+MINIMAX estimate: 3
+```
 
 ## MiniMaxGameImproved.cpp
 This program is identical to MiniMaxGame.cpp except with a similar modified static estimate function as MiniMaxOpeningImproved.cpp. The only difference is that the incomplete mills count for 1000 each while the pieces count for 2000 each maintaining the same ratio as MiniMaxOpeningImproved.cpp. This ratio is somewhat arbitrary and empirical testing should be done to determine a more accurate ratio equivalence between incomplete mills and pieces. I theorize that this ratio will change with the number of pieces on the board as well; it is harder to move a piece to complete a mill if the board is sufficiently crowded with enemy pieces.
 
-As shown in the example below, this allows the white player to prioritize setting up a mill on space 16, 17, and 18 as opposed to just blindly moving a piece from spot 1 to spot 2. 
-### Example (MiniMaxGame.cpp)
+As shown in example 1, this allows the white player to prioritize setting up a mill on space 16, 17, and 18 as opposed to just blindly moving a piece from spot 1 to spot 2. 
+### Example 1 (MiniMaxGame.cpp)
 ``` 
 Input: WBxxxWWxxxxBxxBxxW
 Depth: 1
@@ -127,7 +139,7 @@ Board Position: xBWxxWWxxxxBxxBxxW
 Positions evaluated by static estimation: 7
 MINIMAX estimate: 967
 ```
-### Example (MiniMaxGameImproved.cpp)
+### Example 1 (MiniMaxGameImproved.cpp)
 ``` 
 Input: WBxxxWWxxxxBxxBxxW
 Depth: 1
@@ -135,4 +147,14 @@ Depth: 1
 Board Position: xBxxxWWxxxxBxxBWxW
 Positions evaluated by static estimation: 7
 MINIMAX estimate: 2967
+```
+### Example 2 (MiniMaxGameImproved.cpp)
+Note this produces a different move than the same input shown in the MiniMaxGame.cpp section.
+``` 
+Input: xWBBBBxWxWxxWBWWBx
+Depth: 5
+==================================
+Board Position: WWBBBBxWxWxxWBWxBx
+Positions evaluated by static estimation: 23596
+MINIMAX estimate: 2991
 ```
