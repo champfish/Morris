@@ -203,6 +203,9 @@ array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
             moves[n++] = getPos(pos,i,EMPTY);
         }
     }
+    if(n==0){
+        moves[0] = pos;
+    }
     return moves;
 }
 
@@ -246,20 +249,29 @@ int staticestimate(int pos){
     int moveCount = 0;
     while(moves[moveCount]!=0){moveCount++;}
 
-    int estimate=0;
+    int whiteCount=0;
+    int blackCount=0;
+    int whiteMills=0;
+    int blackMills=0;
     for(int i =0; i<18; i++){
         int val = get(pos,i);
         if(val==WHITE){
-            estimate+=2;
+            whiteCount++;
         }else if (val == BLACK){
-            estimate-=2;
+            blackCount++;
         }else if(closeMill(pos,i,WHITE)){
-            estimate++;
+            whiteMills++;
         }else if(closeMill(pos,i,BLACK)){
-            estimate--;
+            blackMills--;
         }
     }
-    return 1000*estimate-moveCount;
+    if(whiteCount<=2){
+        return INT_MIN;
+    }
+    if(blackCount<=2 || moveCount==0){
+        return INT_MAX;
+    }
+    return (2000*(whiteCount-blackCount))+(1000*(whiteMills-blackMills))-moveCount;
 }
 
 // returns the value of the piece at index, 0 null, 1 white, 2 black

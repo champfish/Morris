@@ -213,6 +213,9 @@ array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
             moves[n++] = getPos(pos,i,EMPTY);
         }
     }
+    if(n==0){
+        moves[0] = pos;
+    }
     return moves;
 }
 
@@ -249,23 +252,31 @@ string inttostring(int input){
 }
 
 // returns the static estimate of position pos
+// returns the static estimate of position pos
 int staticestimate(int pos){
     positionsEvaluated++;
 
     array<int, ARRAY_SIZE> moves = GenerateMovesMidgameEndgame(pos, 2); // WHITE for even, BLACK for odd
     int moveCount = 0;
     while(moves[moveCount]!=0){moveCount++;}
-
     int estimate=0;
+    int whiteCount=0;
+    int blackCount=0;
     for(int i =0; i<18; i++){
         int val = get(pos,i);
         if(val==WHITE){
-            estimate++;
+            whiteCount++;
         }else if (val == BLACK){
-            estimate--;
+            blackCount++;
         }
     }
-    return 1000*estimate-moveCount;
+    if(whiteCount<=2){
+        return -10000;
+    }
+    if(blackCount<=2 || moveCount==0){
+        return 10000;
+    }
+    return 1000*(whiteCount-blackCount)-moveCount;
 }
 
 // returns the value of the piece at index, 0 null, 1 white, 2 black

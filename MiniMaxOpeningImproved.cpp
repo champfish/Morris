@@ -153,6 +153,9 @@ array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
             moves[n++] = getPos(pos,i,EMPTY);
         }
     }
+    if(n==0){
+        moves[0] = pos;
+    }
     return moves;
 }
 
