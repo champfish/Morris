@@ -1,13 +1,13 @@
 // Christian Duffee (cbd170000)
-// CS 6364.0U1
+// CS 6364.0U1 === 11 30s
 // Please forgive code, I haven't coded in C++ since CS 2336
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <array>
 #include <math.h>
 #include <climits>
+#include<ctime>
 
 using namespace std;
 
@@ -29,6 +29,8 @@ static const int BLACK = 2;
 static int color = 0;
 static int targetdepth = 0;
 static int placedepth = 16;
+static int maxtimesec = 20;
+static int maxtimeclock = 0;
 
 static int positionsEvaluated = 0; 
 
@@ -52,25 +54,29 @@ array<int, ARRAY_SIZE> GenerateMove(int pos, int c);
 
 // Main method which takes 3 arguments: string of input file name, string of output file name, depth to search
 int main(int argc, char** argv) {
-    color = strtol(argv[3], NULL, 10);
+    string line = argv[1];
+    color = strtol(argv[2], NULL, 10);
+    placedepth = strtol(argv[3], NULL, 10);
     targetdepth = strtol(argv[4], NULL, 10);
-    placedepth = strtol(argv[5], NULL, 10);
+    int startpos = stringtoint(line);  
+    cout << "Start Position: " << inttostring(startpos) << " "  << staticestimate(startpos) << endl;
 
-    string line;
-    ifstream myfile (argv[1]);
-    getline (myfile,line);
-    int startpos = stringtoint(line);
+    maxtimeclock = maxtimesec * CLOCKS_PER_SEC;
+    clock_t starttime = clock();
+    while(clock()-starttime<maxtimeclock){
+        int rootVal = getbeststartmove(startpos, 0, INT_MIN, INT_MAX);
+        cout << "Board Position: " << inttostring(bestChildPos) << endl;
+        cout << "Positions evaluated by static estimation: " << positionsEvaluated << endl;
+        cout << "MINIMAX estimate: " << rootVal << endl;
+        cout << "Time: " << ((clock()-starttime)/CLOCKS_PER_SEC) << endl << endl;
+        if(bestChildVal==INT_MIN || bestChildVal==INT_MAX){
+            return 1;
+        }
+        targetdepth++; 
+        bestChildVal = INT_MIN;
+        bestChildPos = 0;        
+    }
 
-    int rootVal = getbeststartmove(startpos, 0, INT_MIN, INT_MAX);
-
-    cout << "Board Position: " << inttostring(bestChildPos) << endl;
-    cout << "Positions evaluated by static estimation: " << positionsEvaluated << endl;
-    cout << "MINIMAX estimate: " << rootVal << endl;
-
-    ofstream outfile;
-    outfile.open(argv[2]);
-    outfile << inttostring(bestChildPos);
-    outfile.close();
 }
 
 // Performs the minimax search with limits alpha and beta, setting the minimax value to root, and returning it
@@ -136,6 +142,7 @@ int getbestmove(int pos, int depth, int alpha, int beta) {
             int childVal = getbestmove(move,depth+1,alpha,beta);
             if(depth==0 && childVal>bestChildVal){
                 bestChildPos = move;
+                bestChildVal = childVal;
             }
 
             localMax = max(localMax, childVal);
@@ -281,7 +288,7 @@ array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
 int stringtoint(string line){
     int sum = 0;
     int mult = 1;
-    for(int i =0; i<19; i++){
+    for(int i =0; i<18; i++){
         int val = 0;
         if((color==WHITE && line[i]=='W') || (color==BLACK && line[i]=='B')){
             val = 1;

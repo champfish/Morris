@@ -3,7 +3,6 @@
 // Please forgive code, I haven't coded in C++ since CS 2336
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <array>
 #include <math.h>
@@ -52,25 +51,20 @@ array<int, ARRAY_SIZE> GenerateMove(int pos, int c);
 
 // Main method which takes 3 arguments: string of input file name, string of output file name, depth to search
 int main(int argc, char** argv) {
-    color = strtol(argv[3], NULL, 10);
+    string line = argv[1];
+    color = strtol(argv[2], NULL, 10);
+    placedepth = strtol(argv[3], NULL, 10);
     targetdepth = strtol(argv[4], NULL, 10);
-    placedepth = strtol(argv[5], NULL, 10);
 
-    string line;
-    ifstream myfile (argv[1]);
-    getline (myfile,line);
     int startpos = stringtoint(line);
+    
+    cout << "Start Position: " << inttostring(startpos) << " "  << staticestimate(startpos) << endl;
 
     int rootVal = getbeststartmove(startpos, 0, INT_MIN, INT_MAX);
 
     cout << "Board Position: " << inttostring(bestChildPos) << endl;
     cout << "Positions evaluated by static estimation: " << positionsEvaluated << endl;
     cout << "MINIMAX estimate: " << rootVal << endl;
-
-    ofstream outfile;
-    outfile.open(argv[2]);
-    outfile << inttostring(bestChildPos);
-    outfile.close();
 }
 
 // Performs the minimax search with limits alpha and beta, setting the minimax value to root, and returning it
@@ -281,7 +275,7 @@ array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
 int stringtoint(string line){
     int sum = 0;
     int mult = 1;
-    for(int i =0; i<19; i++){
+    for(int i =0; i<18; i++){
         int val = 0;
         if((color==WHITE && line[i]=='W') || (color==BLACK && line[i]=='B')){
             val = 1;

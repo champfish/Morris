@@ -1,13 +1,13 @@
 // Christian Duffee (cbd170000)
-// CS 6364.0U1
+// CS 6364.0U1 === 11 30s
 // Please forgive code, I haven't coded in C++ since CS 2336
 
 #include <iostream>
-#include <fstream>
 #include <string>
 #include <array>
 #include <math.h>
 #include <climits>
+#include<ctime>
 
 using namespace std;
 
@@ -19,8 +19,10 @@ static const int ARRAY_SIZE = 324;
 
 // an adjacency matrix representing whether a connection exists between any two positions
 const static bool adj[18][18] = {0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,1,0};
-static short startboard[387420489];
-static short board[387420489];
+// static short startboard[387420489];
+// static short board[387420489];
+static signed char startboard[387420489][2];
+static signed char board[387420489][2];
 
 static const int EMPTY = 0;
 static const int WHITE = 1;
@@ -29,6 +31,8 @@ static const int BLACK = 2;
 static int color = 0;
 static int targetdepth = 0;
 static int placedepth = 16;
+static int maxtimesec = 20;
+static int maxtimeclock = 0;
 
 static int positionsEvaluated = 0; 
 
@@ -52,39 +56,50 @@ array<int, ARRAY_SIZE> GenerateMove(int pos, int c);
 
 // Main method which takes 3 arguments: string of input file name, string of output file name, depth to search
 int main(int argc, char** argv) {
-    color = strtol(argv[3], NULL, 10);
+    string line = argv[1];
+    color = strtol(argv[2], NULL, 10);
+    placedepth = strtol(argv[3], NULL, 10);
     targetdepth = strtol(argv[4], NULL, 10);
-    placedepth = strtol(argv[5], NULL, 10);
-
-    string line;
-    ifstream myfile (argv[1]);
-    getline (myfile,line);
     int startpos = stringtoint(line);
+    
+    cout << "Start Position: " << inttostring(startpos) << " "  << staticestimate(startpos) << endl;
 
-    int rootVal = getbeststartmove(startpos, 0, INT_MIN, INT_MAX);
+    maxtimeclock = maxtimesec * CLOCKS_PER_SEC;
+    clock_t starttime = clock();
+    while(clock()-starttime<maxtimeclock){
+        int rootVal = getbeststartmove(startpos, 0, INT_MIN, INT_MAX);
+        cout << "Board Position: " << inttostring(bestChildPos) << endl;
+        cout << "Positions evaluated by static estimation: " << positionsEvaluated << endl;
+        cout << "MINIMAX estimate: " << rootVal << endl;
+        cout << "Time: " << ((clock()-starttime)/CLOCKS_PER_SEC) << endl << endl;
+        targetdepth++;        
+        bestChildVal = INT_MIN;
+        bestChildPos = 0;
 
-    cout << "Board Position: " << inttostring(bestChildPos) << endl;
-    cout << "Positions evaluated by static estimation: " << positionsEvaluated << endl;
-    cout << "MINIMAX estimate: " << rootVal << endl;
-
-    ofstream outfile;
-    outfile.open(argv[2]);
-    outfile << inttostring(bestChildPos);
-    outfile.close();
+        //std::fill( &board[0][0], &board[0][0] + sizeof(board), 0 );
+        //std::fill( &startboard[0][0], &startboard[0][0] + sizeof(startboard), 0 );
+    }
 }
 
 // Performs the minimax search with limits alpha and beta, setting the minimax value to root, and returning it
 int getbeststartmove(int pos, int depth, int alpha, int beta) {
-    int localMin = INT_MAX;
-    int localMax = INT_MIN;
     if(depth==placedepth){
         return getbestmove(pos,depth,alpha,beta);
     }
-    if(depth==targetdepth){
-        if(startboard[pos]==0){
-            startboard[pos] = staticestartingstimate(pos);
+
+    if(startboard[pos][depth%2]==128 || startboard[pos][depth%2]==127){
+        return startboard[pos][depth%2];
+        if(depth==0 && startboard[pos][depth%2]>bestChildVal){
+            bestChildPos = pos;
+            bestChildVal = startboard[pos][depth%2];
         }
-        return startboard[pos];
+    }
+
+    int localMin = INT_MAX;
+    int localMax = INT_MIN;
+
+    if(depth==targetdepth){
+        startboard[pos][depth%2] = staticestartingstimate(pos);
     }else{
         array<int, ARRAY_SIZE> moves = GenerateAdd(pos, depth%2+1); // WHITE for even, BLACK for odd
         int n = 0;
@@ -95,71 +110,102 @@ int getbeststartmove(int pos, int depth, int alpha, int beta) {
                 bestChildPos = move;
                 bestChildVal = childVal;
             }
-            localMax = max(localMax, childVal);
-            localMin = min(localMin, childVal);
+
+            if(childVal>localMax){
+                localMax = childVal;
+            }
+            if(childVal<localMin){
+                localMin = childVal;
+            }
             
             if(depth%2+1==WHITE){
-                alpha = max(alpha, localMax);
+                if(localMax>alpha){
+                    alpha = localMax;
+                }
                 if(beta <= alpha){
                     return INT_MAX;
                 }
             }else{
-                beta = min(beta, localMin);
+                if(localMax<beta){
+                    beta = localMin;
+                }
                 if(beta <= alpha){
                     return INT_MIN;
                 }
             }
             move = moves[++n];         
         }
+        if(depth%2==0){
+            startboard[pos][depth%2] = localMax;
+        }else{
+            startboard[pos][depth%2] = localMin;
+        }
     }
-    if(depth%2==0){
-        return localMax;
-    }else{
-        return localMin;
-    }
+    return startboard[pos][depth%2];
 }
 
 // Performs the minimax search with limits alpha and beta, setting the minimax value to root, and returning it
 int getbestmove(int pos, int depth, int alpha, int beta) {
-    int localMin = INT_MAX;
-    int localMax = INT_MIN;
-    if(depth==targetdepth){
-        if(board[pos]==0){
-            board[pos] = staticestimate(pos);
+    if(board[pos][depth%2]==-128 || board[pos][depth%2]==127){
+        return board[pos][depth%2];
+        if(depth==0 && board[pos][depth%2]>bestChildVal){
+            bestChildPos = pos;
+            bestChildVal = board[pos][depth%2];
         }
-        return board[pos];
+    }
+
+    signed char localMin = 127;
+    signed char localMax = -128;
+
+    if(depth==targetdepth){
+        board[pos][depth%2] = staticestimate(pos);
     }else{
         array<int, ARRAY_SIZE> moves = GenerateMovesMidgameEndgame(pos, depth%2+1); // WHITE for even, BLACK for odd
         int n = 0;
         int move = moves[n];
         while(move != 0){
-            int childVal = getbestmove(move,depth+1,alpha,beta);
-            if(depth==0 && childVal>bestChildVal){
-                bestChildPos = move;
+            signed char childVal = getbestmove(move,depth+1,alpha,beta);
+            if(depth==0){            
+                cout  << int(childVal) << "<" << bestChildVal << endl;
             }
 
-            localMax = max(localMax, childVal);
-            localMin = min(localMin, childVal);
+            if(depth==0 && childVal>bestChildVal){
+                cout << "===" << childVal << endl;
+                bestChildPos = move;
+                bestChildVal = childVal;
+            }
+
+            if(childVal>localMax){
+                localMax = childVal;
+            }
+            if(childVal<localMin){
+                localMin = childVal;
+            }
             
             if(depth%2+1==WHITE){
-                alpha = max(alpha, localMax);
+                if(localMax>alpha){
+                    alpha = localMax;
+                }
                 if(beta <= alpha){
                     return INT_MAX;
                 }
             }else{
-                beta = min(beta, localMin);
+                if(localMax<beta){
+                    beta = localMin;
+                }
                 if(beta <= alpha){
                     return INT_MIN;
                 }
             }
             move = moves[++n];         
         }
+        if(depth%2==0){
+            board[pos][depth%2] = localMax;
+        }else{
+            board[pos][depth%2] = localMin;
+        }
     }
-    if(depth%2==0){
-        return localMax;
-    }else{
-        return localMin;
-    }
+    return board[pos][depth%2];
 }
 
 // return a list of all possible moves when adding a piece of color c from position pos
@@ -281,7 +327,7 @@ array<int, ARRAY_SIZE> GenerateRemove(int pos, int c){
 int stringtoint(string line){
     int sum = 0;
     int mult = 1;
-    for(int i =0; i<19; i++){
+    for(int i =0; i<18; i++){
         int val = 0;
         if((color==WHITE && line[i]=='W') || (color==BLACK && line[i]=='B')){
             val = 1;
@@ -319,7 +365,7 @@ string inttostring(int input){
 
 int staticestartingstimate(int pos){
     positionsEvaluated++;
-    int estimate=0;
+    signed char estimate=50;
     for(int i =0; i<18; i++){
         int val = get(pos,i);
         if(val==1){
@@ -328,7 +374,7 @@ int staticestartingstimate(int pos){
             estimate--;
         }
     }
-    return estimate;
+    return estimate; // ensure it is never 0
 }
 
 // returns the static estimate of position pos
@@ -349,12 +395,16 @@ int staticestimate(int pos){
         }
     }
     if(whiteCount<=2){
-        return -10000;
+        return -128;
     }
     if(blackCount<=2 || moveCount==0){
-        return 10000;
+        return 127;
     }
-    return 1000*(whiteCount-blackCount)-moveCount;
+    int val = 20*(whiteCount-blackCount)-min(25,moveCount);
+    if(val==0){
+        return -1;
+    }
+    return val;
 }
 
 // returns the value of the piece at index, 0 null, 1 white, 2 black
