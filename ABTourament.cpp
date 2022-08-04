@@ -329,14 +329,19 @@ int staticestartingstimate(int pos){
     int estimate=0;
     for(int i =0; i<18; i++){
         int val = get(pos,i);
-        if(val==1){
+        if(val == WHITE){
+            estimate+=2;
+        }else if (val == BLACK){
+            estimate-=2;
+        }else if(closeMill(pos,i,WHITE)){
             estimate++;
-        }else if (val == 2){
+        }else if(closeMill(pos,i,BLACK)){
             estimate--;
         }
     }
     return estimate;
 }
+
 
 // returns the static estimate of position pos
 int staticestimate(int pos){
@@ -345,6 +350,7 @@ int staticestimate(int pos){
     array<int, ARRAY_SIZE> moves = GenerateMovesMidgameEndgame(pos, 2); // WHITE for even, BLACK for odd
     int moveCount = 0;
     while(moves[moveCount]!=0){moveCount++;}
+
     int whiteCount=0;
     int blackCount=0;
     for(int i =0; i<18; i++){
